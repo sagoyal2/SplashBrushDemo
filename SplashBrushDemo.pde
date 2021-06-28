@@ -1,7 +1,7 @@
 /** 
  *  Based off of:
  * 	Particle-Based Fluid Simulation for Interactive Applications
- * 
+ *  Link: https://matthias-research.github.io/pages/publications/sca03.pdf
  * 
  *  SplashBrushDemo
  *  @author Samaksh (Avi) Goyal, 6/27/2021
