@@ -12,16 +12,16 @@ import java.util.*;
 
 // GLOBALS
 float RADIUS = 6;
-float BRUSH_RADIUS = 20.0;
+float BRUSH_RADIUS = 50.0;
 float KERNAL_RADIUS = 50.0;
-float MASS = 20000;
+float MASS = 20;
 
 float GAS_CONSTANT = 80.314;
-float REST_DENSITY = 800000;
-float SURFACE_TENSION = 35;
+float REST_DENSITY = 6000000;
+float SURFACE_TENSION = 272;
 
-int ROWS 		= 11; //(rows - 1)/2 above and below
-int COLUMNS = 21; //same
+int ROWS 		= 21; //(rows - 1)/2 above and below
+int COLUMNS = 41; //same
 
 SplashBrush brush;
 
@@ -49,8 +49,18 @@ void reset() {
 	for(int i = 0; i < ROWS; i++){
 		for(int j = 0; j < COLUMNS; j++){
 
-			float px = origin_x + 20*(j*1.0 - (COLUMNS - 1)/2.0);
-			float py = origin_y + 20*(i*1.0 - (ROWS - 1)/2.0);
+
+			boolean left_top 			= (i == 0) && (j == 0);
+			boolean right_top 		= (i == 0) && (j == COLUMNS - 1);
+			boolean left_bottom 	= (i == ROWS - 1) && (j == 0);
+			boolean right_bottom 	= (i == ROWS - 1) && (j == COLUMNS - 1);
+
+			if(left_top || right_top || left_bottom || right_bottom){
+				continue;
+			}
+
+			float px = origin_x + 15*(j*1.0 - (COLUMNS - 1)/2.0);
+			float py = origin_y + 15*(i*1.0 - (ROWS - 1)/2.0);
 			
 			boolean on_surface = false;
 			if((i == 0) || (i == ROWS-1) || (j == 0) || (j == COLUMNS-1)){
@@ -86,14 +96,17 @@ void draw() {
   calculate_density();
   calculate_color_field(); //not actual color but rather 1/0
 
+  zero_force_buffer();
+
 	set_force_pressure();
   set_force_surface_tension();
   // set_force_external();
+  // check_boundary();
 
 
 	if(INDICATOR == 0){
 		// Using forward Euler rn but can try other schemes and timesteps later
-	  float dt = 0.000002;
+	  float dt = 0.00001;
 	  for (SPHParticle p : droplet) { 
 	  	p.position.add(PVector.mult(p.velocity, dt));
 
@@ -105,7 +118,7 @@ void draw() {
 	  }
 	}
 	
-	// UNCOMMENT below to only draw once which is useful to debug - also uncomment prints below
+	// // UNCOMMENT below to only draw once which is useful to debug - also uncomment prints below
 	// INDICATOR = 1;
 	// noLoop();
 }
@@ -225,6 +238,12 @@ void calculate_color_field(){
 	}
 }
 
+void zero_force_buffer() {
+	for (SPHParticle p : droplet){
+		p.force_total.set(0.0, 0.0, 0.0);
+	}
+}
+
 // Equation 10 + 12
 void set_force_pressure(){
 	for (SPHParticle p : droplet){ 
@@ -242,7 +261,7 @@ void set_force_pressure(){
 		}
 
 		p.force_total.add(PVector.mult(curr_force_pressure, -1.0));
-		println("a.x: " + p.force_total.x + " a.y: " + p.force_total.y + " a.z: " + p.force_total.z);
+		// println("a.x: " + p.force_total.x + " a.y: " + p.force_total.y + " a.z: " + p.force_total.z);
 	}
 }
 
@@ -293,6 +312,26 @@ void calculate_laplacian(){
 void set_force_external(){
 	// DO nothing right now
 	//PVector p = new PVector(0.0, 0.0, 0.0);
+	for (SPHParticle p : droplet){ 
+
+		p.force_total.add(PVector.mult(new PVector(0.0, 1.0, 0.0), 10000000.0));
+	}
+
+}
+
+void check_boundary(){
+	// if we are a point outside, just reverse the velocity
+
+	for (SPHParticle p : droplet){ 
+		p.force_total.add(PVector.mult(new PVector(0.0, 1.0, 0.0), 10000000.0));
+
+
+		if((p.position.x < 0) || (p.position.x > width) || (p.position.y < 0) || (p.position.y > height)){
+			p.velocity = PVector.mult(p.velocity, -1.0);
+		}
+
+	}	
+
 }
 /////////////////////////////////////////////////////////////////
 
